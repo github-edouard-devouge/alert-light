@@ -1,0 +1,19 @@
+// Cloudflare Worker configuration.
+// Secrets (LIFX_TOKEN, SHARED_SECRET) are NOT stored here — push them via:
+//   pywrangler secret put LIFX_TOKEN
+//   pywrangler secret put SHARED_SECRET
+// For local dev, put them in .dev.vars (gitignored).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "alert-light",
+  "main": "src/entry.py",
+  "compatibility_date": "2025-11-02",
+  "compatibility_flags": ["python_workers"],
+  "vars": {
+    "LIFX_SELECTOR": "label:Alert",
+    "LIFX_BASE_URL": "https://api.lifx.com/v1"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

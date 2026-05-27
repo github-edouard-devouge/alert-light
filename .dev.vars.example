@@ -1,0 +1,19 @@
+# Local secrets for `pywrangler dev`. Copy this file to `.dev.vars` and fill
+# in real values. `.dev.vars` is gitignored — never commit secrets.
+#
+# In production these are pushed via `make secrets`, which calls
+# `pywrangler secret put`. Cloudflare stores them encrypted; they are exposed
+# to the Worker as `self.env.<NAME>`.
+
+# Personal access token for the LIFX HTTP API.
+# Get one at https://cloud.lifx.com/settings.
+LIFX_TOKEN=
+
+# Shared secret expected in the X-Webhook-Token header on every webhook call.
+# Generate one with:
+#   python -c "import secrets; print(secrets.token_urlsafe(32))"
+SHARED_SECRET=
+
+# Optional overrides. Defaults live in wrangler.jsonc under `vars`.
+# LIFX_SELECTOR=label:Alert
+# LIFX_BASE_URL=https://api.lifx.com/v1

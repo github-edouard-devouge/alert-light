@@ -1,0 +1,66 @@
+# --- Secrets --------------------------------------------------------------
+# Never commit anything that holds credentials.
+#
+# Cloudflare Workers pick up local secrets from `.dev.vars` (Cloudflare's
+# convention). Only `.dev.vars.example` (template, no values) is tracked.
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+**/credentials.json
+
+# --- Cloudflare / wrangler -------------------------------------------------
+.wrangler/
+.wrangler.toml
+.mf/
+# pywrangler sync materialises a transient mirror of the runtime SDK here:
+python_modules/
+
+# --- Node (pywrangler shells out to wrangler under the hood) --------------
+node_modules/
+package-lock.json
+npm-debug.log*
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+.Python
+build/
+dist/
+.eggs/
+pip-wheel-metadata/
+
+# --- Virtualenvs ----------------------------------------------------------
+.venv/
+.venv-workers/
+venv/
+env/
+ENV/
+
+# --- Test / coverage / lint cache -----------------------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.cache/
+.tox/
+
+# --- Editors / OS ---------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+[project]
+name = "alert-light"
+version = "0.1.0"
+description = "Datadog -> LIFX bridge running on Cloudflare Workers (Python)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+# The Worker itself imports only the stdlib + the `workers` module that the
+# Cloudflare Python Worker runtime provides. No runtime third-party deps.
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "workers-py",
+    "workers-runtime-sdk",
+    "pytest>=8.3.3",
+    "requests>=2.32.3",
+    "ruff>=0.6.9",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+markers = [
+    "integration: spawns a local pywrangler dev server (slow, needs Node + uv)",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]

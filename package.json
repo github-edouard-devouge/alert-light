@@ -1,0 +1,13 @@
+{
+  "name": "alert-light",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bridge Datadog -> LIFX. Cloudflare Python Worker. See README.md.",
+  "scripts": {
+    "dev": "uv run pywrangler dev",
+    "deploy": "uv run pywrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.46.0"
+  }
+}
