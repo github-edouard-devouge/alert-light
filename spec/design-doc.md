@@ -1,87 +1,87 @@
-# Lampe d'alerte Datadog — Plan fonctionnel et architecture
+# Datadog Alert Lamp — Functional Plan and Architecture
 
-> **Statut** : Proposition · **Dernière maj** : 26 mai 2026
-
----
-
-## 1. Contexte et motivation
-
-Les alertes Datadog arrivent aujourd'hui par Slack et e-mail. Deux limites pratiques :
-
-- **Saturation cognitive** : Slack est déjà bruyant. Une P1 se noie dans le flux des notifs d'équipe, des CI, des bots, des canaux SOS.
-- **Hors-écran** : quand on n'est pas devant la machine (café, réunion à côté, debout devant le whiteboard), une notif silencieuse passe inaperçue.
-
-Une **lampe physique dédiée**, posée à côté des écrans, qui pulse en rouge dès qu'un monitor critique se déclenche, restaure un canal d'alerte hors-bande, périphérique mais impossible à manquer. C'est la version moderne du gyrophare de salle de NOC, en version individuelle et à 50 €.
-
-L'objectif n'est **pas** de remplacer Slack/PagerDuty, mais d'ajouter un **signal physique périphérique** complémentaire pour les alertes les plus importantes.
+> **Status**: Proposal · **Last updated**: May 26, 2026
 
 ---
 
-## 2. Besoin fonctionnel
+## 1. Context and motivation
+
+Datadog alerts currently arrive over Slack and email. Two practical limits:
+
+- **Cognitive saturation**: Slack is already noisy. A P1 drowns in the flood of team notifications, CI updates, bots, and SOS channels.
+- **Off-screen**: when you're not in front of your machine (coffee, meeting next door, standing at the whiteboard), a silent notification goes unnoticed.
+
+A **dedicated physical lamp**, sitting next to your screens, that pulses red the moment a critical monitor fires, restores an out-of-band alert channel — peripheral but impossible to miss. It's the modern version of the NOC-room beacon, individual and at $50.
+
+The goal is **not** to replace Slack/PagerDuty, but to add a **peripheral physical signal** that complements them for the most important alerts.
+
+---
+
+## 2. Functional requirements
 
 ### 2.1 User stories
 
-| # | En tant que…           | Je veux…                                                                       | Pour…                                                                  |
+| # | As a…                  | I want…                                                                        | So that…                                                               |
 |---|------------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| 1 | Ingénieur platform     | que ma lampe pulse en rouge dès qu'un monitor P1 trigger                       | être alerté même sans regarder mon écran                               |
-| 2 | Ingénieur platform     | que la lampe redevienne calme (verte ou éteinte) au recovery                   | savoir visuellement que l'incident est résolu                          |
-| 3 | Ingénieur platform     | distinguer warning, error et recovery                                          | prioriser sans avoir à lire la notif                                   |
-| 4 | Engineering Director   | déployer le système sans serveur à maintenir                                   | que ça reste un side-project, pas une dette                            |
-| 5 | Engineering Director   | que la chaîne complète coûte moins de 5 €/mois                                 | rester sur le free tier des providers                                  |
-| 6 | Ingénieur platform     | router seulement les monitors taggés `alert_lamp:true`                         | ne pas être envahi par toutes les alertes Datadog du compte            |
+| 1 | Platform engineer      | my lamp pulses red as soon as a P1 monitor triggers                            | I'm alerted even when I'm not looking at my screen                     |
+| 2 | Platform engineer      | the lamp goes back to calm (green or off) on recovery                          | I can see at a glance that the incident is resolved                    |
+| 3 | Platform engineer      | I can distinguish warning, error, and recovery                                 | I can prioritize without having to read the notification               |
+| 4 | Engineering Director   | to deploy the system with no server to maintain                                | this stays a side project, not technical debt                          |
+| 5 | Engineering Director   | the whole chain to cost less than $5/month                                     | we stay on the free tier of every provider                             |
+| 6 | Platform engineer      | to route only monitors tagged `alert_lamp:true`                                | I'm not flooded by every Datadog alert in the account                  |
 
-### 2.2 Cas d'usage
+### 2.2 Use cases
 
-1. **Trigger d'un monitor `error`** → la lampe pulse en rouge ~7 s (12 cycles à 0.6 s), puis revient à son état précédent.
-2. **Trigger d'un monitor `warning`** → la lampe pulse en orange ~6 s (6 cycles à 1 s).
-3. **Recovery** → la lampe respire en vert ~4,5 s (3 cycles à 1,5 s).
-4. **No Data** → la lampe respire en violet pour signaler "perte de signal" (à distinguer d'un trigger réel).
+1. **An `error` monitor triggers** → the lamp pulses red for ~7 s (12 cycles at 0.6 s), then returns to its previous state.
+2. **A `warning` monitor triggers** → the lamp pulses orange for ~6 s (6 cycles at 1 s).
+3. **Recovery** → the lamp breathes green for ~4.5 s (3 cycles at 1.5 s).
+4. **No Data** → the lamp breathes purple to signal "signal lost" (to distinguish it from a real trigger).
 
-### 2.3 Non-fonctionnel
+### 2.3 Non-functional
 
-- **Latence cible** : < 5 s entre trigger Datadog et début du clignotement.
-- **Disponibilité cible** : best-effort. Une alerte perdue n'est pas un incident — la source de vérité reste Slack/PagerDuty.
-- **Coût cible** : 0 € de récurrent (free tiers), 50 € one-shot hardware.
+- **Target latency**: < 5 s between Datadog trigger and the start of the flashing.
+- **Target availability**: best-effort. A lost alert is not an incident — Slack/PagerDuty remain the source of truth.
+- **Target cost**: $0 recurring (free tiers), $50 one-time hardware.
 
 ---
 
-## 3. Périmètre
+## 3. Scope
 
 ### 3.1 In-scope
 
-- Une seule ampoule LIFX par poste.
-- Notification depuis Datadog uniquement (compte EU).
-- Effet visuel limité aux modes `pulse` et `breathe` de l'API LIFX.
-- Déploiement individuel (chaque ingénieur qui veut une lampe la déploie pour soi).
+- One LIFX bulb per workstation.
+- Notifications from Datadog only (EU account).
+- Visual effects limited to the `pulse` and `breathe` modes of the LIFX API.
+- Individual deployment (each engineer who wants a lamp deploys it for themselves).
 
 ### 3.2 Out-of-scope (v1)
 
-- Mode multi-utilisateurs (une lampe par équipe avec accusé de réception, etc.).
-- Intégration PagerDuty / Opsgenie (Datadog suffit pour le besoin initial).
-- Acquittement de l'alerte depuis un bouton physique.
-- Audio (sirène, voix) : trop intrusif en open-space.
-- Synchronisation entre plusieurs lampes.
+- Multi-user mode (one lamp per team with acknowledgment, etc.).
+- PagerDuty / Opsgenie integration (Datadog is enough for the initial need).
+- Acknowledging the alert via a physical button.
+- Audio (siren, voice): too intrusive in an openspace office.
+- Synchronization between several lamps.
 
 ---
 
-## 4. Principes d'architecture
+## 4. Architectural principles
 
-| # | Principe                            | Conséquence concrète                                                                                                |
-|---|-------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| 1 | **Serverless ou rien**              | Pas de VM, pas de Pi, pas de Docker. Cloudflare Worker uniquement.                                                  |
-| 2 | **Free tier strict**                | 100 k req/jour CF Workers + 60 req/min LIFX = très largement suffisant. Aucun service payant.                       |
-| 3 | **Stateless par défaut**            | Le Worker ne stocke rien entre deux requêtes. État éventuel (dédoublonnage) délégué à CF KV, optionnel.             |
-| 4 | **Une seule responsabilité**        | Le Worker traduit `alert Datadog → appel LIFX`. Pas de logique métier, pas de routage complexe.                     |
-| 5 | **Best-effort assumé**              | Si la lampe rate une alerte, Slack et PagerDuty restent les sources de vérité. Pas de retry agressif, pas d'ACK.    |
-| 6 | **Sécurité minimale mais réelle**   | Token partagé en header HTTP. Pas de mTLS, pas d'OAuth, mais jamais de secrets en clair dans le code.               |
-| 7 | **Réversibilité**                   | Si LIFX ferme son API ou augmente ses prix : on remplace l'ampoule par une Shelly et on change ~10 lignes du Worker.|
-| 8 | **Pas d'orchestration domestique**  | Pas de Home Assistant, pas de Node-RED. Datadog → Cloudflare → LIFX Cloud → ampoule. Trois sauts, point.            |
+| # | Principle                           | Concrete consequence                                                                                                 |
+|---|-------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| 1 | **Serverless or nothing**           | No VM, no Pi, no Docker. Cloudflare Worker only.                                                                     |
+| 2 | **Strict free tier**                | 100k req/day on CF Workers + 60 req/min on LIFX = far more than enough. No paid service.                             |
+| 3 | **Stateless by default**            | The Worker stores nothing between requests. Any state (deduplication) is offloaded to CF KV, optional.               |
+| 4 | **Single responsibility**           | The Worker translates `Datadog alert → LIFX call`. No business logic, no complex routing.                            |
+| 5 | **Best-effort, acknowledged**       | If the lamp misses an alert, Slack and PagerDuty remain the source of truth. No aggressive retry, no ACK.            |
+| 6 | **Minimal but real security**       | Shared token in an HTTP header. No mTLS, no OAuth, but never any secret in cleartext in the code.                    |
+| 7 | **Reversibility**                   | If LIFX shuts down its API or raises prices: swap the bulb for a Shelly and change ~10 lines in the Worker.          |
+| 8 | **No home-automation orchestration**| No Home Assistant, no Node-RED. Datadog → Cloudflare → LIFX Cloud → bulb. Three hops, that's it.                     |
 
 ---
 
-## 5. Architecture cible
+## 5. Target architecture
 
-### 5.1 Diagramme de flux
+### 5.1 Flow diagram
 
 ```
 ┌────────────────────┐
@@ -94,45 +94,45 @@ L'objectif n'est **pas** de remplacer Slack/PagerDuty, mais d'ajouter un **signa
 ┌────────────────────────────────────┐
 │  Cloudflare Worker (Python)        │
 │  - Auth (shared secret)            │
-│  - Map alert_type → effet LIFX     │
-│  - (option) dédoublonnage 30s KV   │
+│  - Map alert_type → LIFX effect    │
+│  - (optional) 30s KV dedup         │
 └──────────┬─────────────────────────┘
            │ HTTPS POST /v1/lights/.../effects/pulse
-           │ + Bearer token LIFX
+           │ + LIFX Bearer token
            ▼
 ┌────────────────────┐
 │   LIFX Cloud API   │
 └──────────┬─────────┘
-           │ TCP push vers ampoule
+           │ TCP push to the bulb
            ▼
 ┌────────────────────┐
-│  Ampoule LIFX A60  │
-│   (Wi-Fi domestique)│
+│   LIFX A60 bulb    │
+│   (home Wi-Fi)     │
 └────────────────────┘
 ```
 
-### 5.2 Composants
+### 5.2 Components
 
-| Composant            | Rôle                                                  | Hébergement       | Coût        |
-|----------------------|-------------------------------------------------------|-------------------|-------------|
-| Datadog Monitor      | Source de l'événement                                 | SaaS (existant)   | déjà payé   |
-| Datadog Webhook      | Émission HTTP vers le Worker                          | SaaS              | inclus      |
-| Cloudflare Worker    | Traduction & routage `alert → effet LIFX`             | Cloudflare edge   | 0 €         |
-| Cloudflare KV (opt.) | Dédoublonnage par `monitor_id` sur fenêtre 30 s       | Cloudflare        | 0 € (<100k)  |
-| LIFX Cloud           | Relais vers l'ampoule                                 | SaaS LIFX         | 0 €         |
-| Ampoule LIFX A60     | Rendu physique                                        | Domicile          | 50 € one-shot|
+| Component            | Role                                                  | Hosting           | Cost          |
+|----------------------|-------------------------------------------------------|-------------------|---------------|
+| Datadog Monitor      | Source of the event                                   | SaaS (existing)   | already paid  |
+| Datadog Webhook      | HTTP push to the Worker                               | SaaS              | included      |
+| Cloudflare Worker    | Translation & routing `alert → LIFX effect`           | Cloudflare edge   | $0            |
+| Cloudflare KV (opt.) | Deduplication by `monitor_id` over a 30 s window      | Cloudflare        | $0 (<100k)    |
+| LIFX Cloud           | Relay to the bulb                                     | LIFX SaaS         | $0            |
+| LIFX A60 bulb        | Physical output                                       | Home              | $50 one-time  |
 
-### 5.3 Flux nominal
+### 5.3 Nominal flow
 
-1. Un monitor `service:api env:prod` taggé `alert_lamp:true` passe en `Alert`.
-2. Datadog évalue la notif `@webhook-lifx-alert` présente dans le message.
-3. Datadog POST sur `https://datadog-lifx-alert.<sub>.workers.dev` avec un payload templaté et le header `X-Webhook-Token`.
-4. Le Worker authentifie, lit `alert_type` et `transition`, choisit le profil.
-5. Le Worker POST sur `https://api.lifx.com/v1/lights/label:Alert/effects/pulse` avec le Bearer token.
-6. LIFX Cloud relaie l'ordre à l'ampoule, qui clignote ~7 s puis revient à son état initial.
-7. Au recovery, même chaîne, profil "success" (vert, breathe).
+1. A monitor `service:api env:prod` tagged `alert_lamp:true` transitions to `Alert`.
+2. Datadog evaluates the `@webhook-lifx-alert` notification present in the message.
+3. Datadog POSTs to `https://datadog-lifx-alert.<sub>.workers.dev` with a templated payload and the `X-Webhook-Token` header.
+4. The Worker authenticates, reads `alert_type` and `transition`, and picks the profile.
+5. The Worker POSTs to `https://api.lifx.com/v1/lights/label:Alert/effects/pulse` with the Bearer token.
+6. LIFX Cloud relays the command to the bulb, which flashes for ~7 s then returns to its initial state.
+7. On recovery, same chain, "success" profile (green, breathe).
 
-### 5.4 Configuration du Worker
+### 5.4 Worker configuration
 
 ```toml
 # wrangler.toml
@@ -145,17 +145,17 @@ compatibility_flags = ["python_workers"]
 LIFX_SELECTOR = "label:Alert"
 ```
 
-Secrets (jamais en clair dans le repo) :
+Secrets (never in cleartext in the repo):
 
-- `LIFX_TOKEN` : Bearer LIFX, créé sur https://cloud.lifx.com/settings.
-- `SHARED_SECRET` : random ≥ 32 caractères, partagé avec le header webhook Datadog.
+- `LIFX_TOKEN`: LIFX Bearer, created at https://cloud.lifx.com/settings.
+- `SHARED_SECRET`: random ≥ 32 characters, shared with the Datadog webhook header.
 
-### 5.5 Configuration Datadog
+### 5.5 Datadog configuration
 
-Webhook integration :
-- **URL** : `https://datadog-lifx-alert.<sub>.workers.dev`
-- **Custom headers** : `{"X-Webhook-Token": "<SHARED_SECRET>"}`
-- **Payload** :
+Webhook integration:
+- **URL**: `https://datadog-lifx-alert.<sub>.workers.dev`
+- **Custom headers**: `{"X-Webhook-Token": "<SHARED_SECRET>"}`
+- **Payload**:
   ```json
   {
     "alert_type": "$ALERT_TYPE",
@@ -165,116 +165,116 @@ Webhook integration :
   }
   ```
 
-Côté monitor : ajouter `@webhook-lifx-alert` dans le message, scoped via une tag policy ou explicitement par monitor.
+On the monitor side: add `@webhook-lifx-alert` to the message, scoped via a tag policy or explicitly per monitor.
 
 ---
 
-## 6. Sécurité
+## 6. Security
 
-| Risque                                                    | Mitigation                                                                                  |
-|-----------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| Quelqu'un découvre l'URL du Worker et déclenche des flashs| Header `X-Webhook-Token` (rejet 401 si absent ou faux)                                       |
-| Token LIFX exfiltré                                       | Stocké en CF secret, jamais en clair. Révocable depuis le dashboard LIFX en 1 clic.         |
-| Exposition de données internes dans le payload            | Le payload ne contient que `alert_type`, `transition`, `monitor_id`, `title`. Pas de PII.   |
-| MITM entre Datadog et Worker                              | TLS de bout en bout (Cloudflare gère le certificat).                                        |
-| Compromission de Cloudflare                               | Risque résiduel accepté. L'impact est limité à "lampe qui clignote dans le vide".           |
-| Compromission de LIFX Cloud                               | Risque résiduel accepté. Idem.                                                              |
+| Risk                                                         | Mitigation                                                                                  |
+|--------------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| Someone discovers the Worker URL and triggers random flashes | `X-Webhook-Token` header (401 if missing or wrong)                                          |
+| LIFX token exfiltrated                                       | Stored as a CF secret, never in cleartext. Revocable from the LIFX dashboard in one click.  |
+| Internal data exposure in the payload                        | The payload contains only `alert_type`, `transition`, `monitor_id`, `title`. No PII.        |
+| MITM between Datadog and the Worker                          | End-to-end TLS (Cloudflare manages the certificate).                                        |
+| Cloudflare compromise                                        | Residual risk accepted. The blast radius is "lamp flashing into the void."                  |
+| LIFX Cloud compromise                                        | Residual risk accepted. Same.                                                               |
 
-**Non-objectif** : ce système n'est pas un canal d'alerte sécurisé. Aucune donnée sensible ne doit transiter par cette chaîne. Le `title` du monitor est volontairement laissé en clair pour debug, mais le Worker pourrait le tronquer ou le hasher si besoin.
+**Non-goal**: this system is not a secure alerting channel. No sensitive data should flow through this chain. The monitor `title` is deliberately left in cleartext for debugging, but the Worker could truncate or hash it if needed.
 
 ---
 
-## 7. Observabilité
+## 7. Observability
 
-Méta-question : comment savoir que la lampe est en panne ?
+Meta-question: how do we know the lamp itself is broken?
 
-| Symptôme                            | Détection                                                                         |
+| Symptom                             | Detection                                                                         |
 |-------------------------------------|-----------------------------------------------------------------------------------|
-| Worker down                         | Cloudflare dashboard (logs, métriques requêtes/erreurs gratuits).                 |
-| Ampoule offline (Wi-Fi coupé)       | Réponse LIFX `offline` dans `results[].status`. Logguer côté Worker.              |
-| LIFX API down                       | HTTP 5xx remonté dans les logs Worker.                                            |
-| Datadog n'envoie plus               | À détecter manuellement (test mensuel) ou via un canary monitor qui s'auto-trigger une fois par jour. |
+| Worker down                         | Cloudflare dashboard (free logs and request/error metrics).                       |
+| Bulb offline (Wi-Fi down)           | LIFX response `offline` in `results[].status`. Log it on the Worker side.         |
+| LIFX API down                       | HTTP 5xx surfaced in the Worker logs.                                             |
+| Datadog stops sending               | Detected manually (monthly test) or via a canary monitor that self-triggers daily.|
 
-**Recommandation v1** : pas de monitoring du monitoring. Test manuel hebdo en déclenchant le webhook via `curl`. Si besoin v2, ajouter un canary monitor Datadog qui s'auto-déclenche tous les jours à heure fixe et vérifie que la lampe a flashé (vision humaine, pas instrumenté).
+**v1 recommendation**: no monitoring of the monitoring. Weekly manual test by triggering the webhook via `curl`. If needed in v2, add a Datadog canary monitor that self-fires daily at a fixed time and someone visually checks the lamp flashed (human eyeballs, not instrumented).
 
 ---
 
 ## 8. Roadmap
 
-### v1 — MVP (1 soirée)
-- Worker Python déployé, secrets configurés.
-- Un seul monitor de test, profil `error` uniquement.
-- Validation visuelle.
+### v1 — MVP (one evening)
+- Python Worker deployed, secrets configured.
+- A single test monitor, `error` profile only.
+- Visual validation.
 
-### v2 — Profils complets (2 h)
-- Mapping complet `error / warning / success / info`.
-- Logique recovery.
-- Logs structurés.
+### v2 — Full profiles (2 h)
+- Full mapping `error / warning / success / info`.
+- Recovery logic.
+- Structured logs.
 
-### v3 — Hardening (optionnel, 2 h)
-- Dédoublonnage CF KV (fenêtre 30 s par `monitor_id`).
-- Test canary quotidien.
-- Documentation README pour les collègues qui veulent leur lampe.
+### v3 — Hardening (optional, 2 h)
+- CF KV deduplication (30 s window per `monitor_id`).
+- Daily canary test.
+- README documentation for colleagues who want their own lamp.
 
-### v4 — Idées futures (non-engagé)
-- Bouton physique (Shelly Plus 1 ou bouton Zigbee) pour acquitter l'alerte → éteindre la lampe.
-- Profil "deploy en cours" déclenché par GitHub Actions (bleu lent).
-- Mode "focus" : si activé manuellement, ignore les warnings.
+### v4 — Future ideas (uncommitted)
+- Physical button (Shelly Plus 1 or a Zigbee button) to acknowledge the alert → turn off the lamp.
+- "Deploy in progress" profile triggered from GitHub Actions (slow blue).
+- "Focus" mode: when manually enabled, ignore warnings.
 
 ---
 
-## 9. Risques et limites
+## 9. Risks and limits
 
-| Risque                                                       | Probabilité | Impact | Mitigation                                          |
+| Risk                                                         | Likelihood  | Impact | Mitigation                                          |
 |--------------------------------------------------------------|-------------|--------|------------------------------------------------------|
-| LIFX ferme/restreint son API cloud                           | Faible      | Moyen  | Réversibilité vers Shelly (~10 lignes à changer)     |
-| Wi-Fi domestique coupé                                       | Moyen       | Faible | Best-effort assumé, fallback Slack toujours présent  |
-| Datadog change le format de ses webhooks                     | Très faible | Faible | Payload est templaté côté Datadog, pas imposé        |
-| Cloudflare Python Workers cassent (encore en open beta)      | Faible      | Faible | Fallback JS Worker équivalent (~25 lignes)           |
-| Saturation rate-limit LIFX (60 req/min)                      | Très faible | Faible | Dédoublonnage KV si besoin                           |
-| Mauvais réflexe d'abonner la lampe à trop de monitors        | Élevé       | Moyen  | Discipline : seuls les monitors taggés `alert_lamp:true` |
+| LIFX shuts down or restricts its cloud API                   | Low         | Medium | Reversibility to Shelly (~10 lines to change)        |
+| Home Wi-Fi down                                              | Medium      | Low    | Best-effort accepted, Slack fallback always present  |
+| Datadog changes its webhook format                           | Very low    | Low    | Payload is templated on the Datadog side, not forced |
+| Cloudflare Python Workers break (still in open beta)         | Low         | Low    | Equivalent JS Worker fallback (~25 lines)            |
+| LIFX rate-limit saturation (60 req/min)                      | Very low    | Low    | KV dedup if needed                                   |
+| Reflex of wiring the lamp to too many monitors               | High        | Medium | Discipline: only monitors tagged `alert_lamp:true`   |
 
 ---
 
-## 10. Décisions techniques structurantes
+## 10. Key technical decisions
 
-| # | Décision                                          | Alternative écartée            | Justification courte                                                   |
+| # | Decision                                          | Alternative rejected           | Short rationale                                                        |
 |---|---------------------------------------------------|--------------------------------|------------------------------------------------------------------------|
-| 1 | Ampoule LIFX Color A60                            | Hue                            | Pas de bridge à 50 €, API REST directe, OAuth inutile                  |
-| 1 | Ampoule LIFX Color A60                            | Tapo L530E                     | CVE récurrents + cloud chinois + pas d'API publique                    |
-| 1 | Ampoule LIFX Color A60                            | WiZ                            | Pas d'API cloud publique, UDP local incompatible Worker                |
-| 1 | Ampoule LIFX Color A60                            | Shelly Duo RGBW                | LIFX plus mature côté effets natifs `pulse`/`breathe`. Shelly reste plan B EU.|
-| 1 | Ampoule LIFX Color A60                            | Govee                          | Cloud chinois (même catégorie de doute que Tapo)                       |
-| 2 | Cloudflare Worker (Python)                        | AWS Lambda                     | Free tier plus généreux, déploiement plus simple, edge mondial         |
-| 2 | Cloudflare Worker (Python)                        | Worker JS                      | Préférence personnelle Python. Fallback JS si beta instable.           |
-| 3 | Webhook Datadog natif                             | Polling API Datadog            | Push > pull, latence et coût meilleurs                                 |
-| 4 | Header `X-Webhook-Token`                          | mTLS, signature HMAC           | Simplicité acceptable au regard de l'enjeu (lampe qui clignote)        |
+| 1 | LIFX Color A60 bulb                               | Hue                            | No $50 bridge needed, direct REST API, no OAuth                        |
+| 1 | LIFX Color A60 bulb                               | Tapo L530E                     | Recurring CVEs + Chinese cloud + no public API                         |
+| 1 | LIFX Color A60 bulb                               | WiZ                            | No public cloud API, local UDP incompatible with the Worker            |
+| 1 | LIFX Color A60 bulb                               | Shelly Duo RGBW                | LIFX is more mature on native `pulse`/`breathe` effects. Shelly stays the EU plan B.|
+| 1 | LIFX Color A60 bulb                               | Govee                          | Chinese cloud (same category of doubt as Tapo)                         |
+| 2 | Cloudflare Worker (Python)                        | AWS Lambda                     | More generous free tier, simpler deployment, global edge               |
+| 2 | Cloudflare Worker (Python)                        | JS Worker                      | Personal preference for Python. JS fallback if the beta is unstable.   |
+| 3 | Native Datadog webhook                            | Polling the Datadog API        | Push > pull, better latency and cost                                   |
+| 4 | `X-Webhook-Token` header                          | mTLS, HMAC signature           | Acceptable simplicity given the stakes (a flashing lamp)               |
 
 ---
 
-## 11. Annexes
+## 11. Appendices
 
-### A. Sélecteurs LIFX utiles
+### A. Useful LIFX selectors
 
-| Sélecteur            | Effet                                            |
+| Selector             | Effect                                           |
 |----------------------|--------------------------------------------------|
-| `all`                | Toutes les ampoules du compte                    |
-| `label:Alert`        | Ampoule(s) nommée(s) `Alert` dans l'app LIFX     |
-| `group:Office`       | Toutes les ampoules du groupe `Office`           |
-| `id:d073d5...`       | Une ampoule spécifique par MAC                   |
+| `all`                | Every bulb on the account                        |
+| `label:Alert`        | Bulb(s) named `Alert` in the LIFX app            |
+| `group:Bureau`       | Every bulb in the `Bureau` group                 |
+| `id:d073d5...`       | A specific bulb by MAC                           |
 
-### B. Variables Datadog disponibles dans le webhook
+### B. Datadog variables available in the webhook
 
-| Variable               | Exemple                                  |
+| Variable               | Example                                  |
 |------------------------|------------------------------------------|
 | `$ALERT_TYPE`          | `error`, `warning`, `success`, `info`    |
 | `$ALERT_TRANSITION`    | `Triggered`, `Recovered`, `Re-Triggered` |
 | `$ALERT_ID`            | `1234567`                                |
 | `$EVENT_TITLE`         | `[Triggered] API p95 > 500ms`            |
-| `$EVENT_MSG`           | Le corps complet du monitor              |
+| `$EVENT_MSG`           | The full monitor body                    |
 
-### C. Liens de référence
+### C. Reference links
 
-- LIFX HTTP API : https://api.developer.lifx.com/
-- Cloudflare Workers (Python) : https://developers.cloudflare.com/workers/languages/python/
-- Datadog Webhooks : https://docs.datadoghq.com/integrations/webhooks/
+- LIFX HTTP API: https://api.developer.lifx.com/
+- Cloudflare Workers (Python): https://developers.cloudflare.com/workers/languages/python/
+- Datadog Webhooks: https://docs.datadoghq.com/integrations/webhooks/
