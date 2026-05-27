@@ -1,7 +1,9 @@
 # alert-light
 
 A tiny **Python Cloudflare Worker** that lights up a physical **LIFX** bulb
-whenever a **Datadog** monitor triggers. 
+whenever a **Datadog** monitor triggers.
+
+![Datadog critical alert relayed by a Cloudflare Worker to a flashing LIFX bulb](docs/hero.png)
 
 ```
 Datadog monitor
